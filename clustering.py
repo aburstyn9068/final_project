@@ -7,7 +7,7 @@ def cluster(df1, player):
     #df1 = df.loc[df["Pos"]==position]
 
     # Create the input variables
-    X = df1.drop(columns=["Player", "Tm", "Pos", "ID", "Salary"])
+    X = df1.drop(columns=["Player", "Tm", "Pos", "Salary"])
 
     clustering = AgglomerativeClustering(n_clusters=13).fit(X)
     
@@ -15,7 +15,7 @@ def cluster(df1, player):
 
     player_label = df1.loc[df1["Player"]==player]["Label"].values[0]
     # Return the dataframe of top 5 players similar to selected player
-    return df1.loc[(df1["Label"]==player_label)&(df1["Player"]!=player)].reset_index().drop(columns=["index"]).head()
+    return df1.loc[(df1["Label"]==player_label)&(df1["Player"]!=player)].reset_index().drop(columns=["index"]).head(5)
 
 
 
