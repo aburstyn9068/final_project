@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from pyvis import network as net
 from stvis import pv_static
 import plotly.graph_objects as go
-import clustering
+#import clustering
 import distance
 
 # Create interactive dashboard
