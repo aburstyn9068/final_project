@@ -7,6 +7,7 @@ from stvis import pv_static
 import plotly.graph_objects as go
 #import clustering
 import distance
+from sklearn.metrics.pairwise import euclidean_distances
 
 # Create interactive dashboard
 # Title
