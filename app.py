@@ -77,7 +77,7 @@ def user_input():
 
     salary = st.sidebar.slider("Salary Requirement", salary_min, salary_max, salary_max)
 
-    # Store and reutrn input
+    # Store and return input
     input_data = {
         "team": team,
         "position": position,
@@ -113,15 +113,23 @@ try:
     # Graph the player stats
     player_stats = df.loc[df["Player"]==input_data.player[0]]
 
-    # Network graph
-    st.subheader("Network Graph of Closest Players to Target Player")
-    g=net.Network(height='500px', width='500px',heading='')
-    g.add_node(input_data.player[0], value=int(player_stats["Salary"].values[0]), color="red")
-    for index, row in clustered_df.iterrows():
-        g.add_node(row["Player"], value=row["Salary"])
-        g.add_edge(input_data.player[0],row["Player"], value=row["Distance"], weight=5, distance=row["Distance"])
-    #pv_static(g)
+    # # Network graph
+    # st.subheader("Network Graph of Closest Players to Target Player")
+    # g=net.Network(height='500px', width='700px', heading='')
+    # g.add_node(input_data.player[0], value=int(player_stats["Salary"].values[0]), color="red")
+    # for index, row in clustered_df.iterrows():
+    #     g.add_node(row["Player"], value=row["Salary"])
+    #     g.add_edge(input_data.player[0],row["Player"], value=row["Distance"], weight=5, distance=row["Distance"])
+    # # Display network graph
+    # pv_static(g)
 
+    # st.write("""The width of the line connecting the players represents how closely related the players are.
+    # The thicker the line, the more closely related they are.
+    # The size of the bubble representing the players is sized according to the players salary.""")
+    
+    # Line break
+    st.markdown("***")
+    
     # Player comparison graph
 
     # Get list of stats to display
@@ -129,6 +137,7 @@ try:
     index = player1.columns
 
     # Display stats checkbox
+    st.write("Select stats to display:")
     graph_index_selection = {}
     for stat in index:
         graph_index_selection[stat] = True
@@ -138,7 +147,11 @@ try:
     col_index = 0
     counter = 0
     for stat in graph_index_selection:
-        graph_index_selection[stat] = cols[col_index].checkbox(stat)
+        # Set default stats to display
+        if (stat == "FG") or (stat == "FGA") or (stat == "2P") or (stat == "2PA") or (stat == "TRB"):
+            graph_index_selection[stat] = cols[col_index].checkbox(stat, value=True)
+        else:
+            graph_index_selection[stat] = cols[col_index].checkbox(stat, value=False)
         counter+=1
         if (counter%4)==0:
             col_index+=1
