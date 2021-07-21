@@ -54,8 +54,8 @@ def user_input():
     if team == "ALL":
         position_list = np.append(["ALL"], df["Pos"].sort_values().unique())
         player_list = df["Player"].sort_values().unique()
-        salary_min = df["Salary"].min()
-        salary_max = df["Salary"].max()
+        salary_min = int(df["Salary"].min())
+        salary_max = int(df["Salary"].max())
     else:
         position_list = np.append(["ALL"], df["Pos"].loc[df["Tm"]==team].sort_values().unique())
         player_list = df["Player"].loc[df["Tm"]==team].sort_values().unique()
