@@ -6,8 +6,25 @@ from pyvis import network as net
 from stvis import pv_static
 import plotly.graph_objects as go
 #import clustering
-import distance
+#import distance
 from sklearn.metrics.pairwise import euclidean_distances
+
+# Player Distance function
+def cluster(df1, player):
+    # Create the input variables
+    x = df1.loc[df1["Player"]==player]
+    x = x.drop(columns=["Player", "Tm", "Pos", "Salary"])
+
+    y = df1.drop(columns=["Player", "Tm", "Pos", "Salary"])
+
+    # Calculate the distance between players
+    df1["Distance"] = euclidean_distances(x, y)[0]
+
+    # Sort the players by distance to the target
+    df1 = df1.sort_values(by="Distance", ascending=True).reset_index(drop=True)
+    
+    # Return the top 5 closest players
+    return df1[1:6]
 
 # Create interactive dashboard
 # Title
@@ -80,7 +97,7 @@ pos = df["Pos"].loc[df["Player"]==input_data.player[0]].values[0]
 #clustered_df = clustering.cluster(df.loc[df["Pos"]==pos], input_data.player[0])
 
 #clustered_df = clustering.cluster(df.loc[(df["Pos"]==pos)&(df["Salary"]<=input_data.salary[0])], input_data.player[0])
-clustered_df = distance.cluster(df.loc[(df["Pos"]==pos)&(df["Salary"]<=input_data.salary[0])], input_data.player[0])
+clustered_df = cluster(df.loc[(df["Pos"]==pos)&(df["Salary"]<=input_data.salary[0])], input_data.player[0])
 
 st.write(clustered_df)
 
