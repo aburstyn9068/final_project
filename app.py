@@ -30,6 +30,15 @@ def cluster(df1, player):
 st.write("""
 # NBA Player Replacement
 This app can be used to determine who will be a suitable replacement for a player on your roster.
+Using the input variables on the sidebar to the left, you can select the player you want to replace.
+The players can be filtered by team and position. Additionally, you can select a maximum salary for 
+replacement player options.
+
+After a player is selected, the top 5 closest players to them will be displayed. The network graph 
+seen below shows the relationship between the players.
+
+The players stats can be compared using the interactive bar graph below. Stats and players can be 
+added or removed from the graph by clicking on them.
 """)
 
 # Upload the data only when first opening the app
