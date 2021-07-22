@@ -95,19 +95,21 @@ def network(input_data, clustered_df):
                 thickness=15,
                 title='Player Salary',
                 xanchor='left',
-                titleside='right'
+                titleside='right',
+                tickprefix = '$',
+                tickformat = ','
             ),
             line_width=2))
 
-    node_adjacencies = [int(player_stats["Salary"].values[0])]
+    node_color = [int(player_stats["Salary"].values[0])]
     node_text = [f"Salary: {int(player_stats.Salary.values[0])}"]
 
     for index, row in clustered_df.iterrows():
-        node_adjacencies.append(row["Salary"])
+        node_color.append(row["Salary"])
         #node_text.append(f"Salary: {row.Salary}")
 
 
-    node_trace.marker.color = node_adjacencies
+    node_trace.marker.color = node_color
     #node_trace.text = node_text
 
     fig2 = go.Figure(data=[edge_trace, node_trace],
@@ -191,8 +193,12 @@ player_list = df["Player"].loc[df["Tm"]==input_data["team"][0]].sort_values().un
 # Display the selected player
 player_stats = df.loc[df["Player"]==input_data.player[0]]
 
+# Format salary for currency to display on output
+selected_currency = player_stats.reset_index(drop=True)
+selected_currency["Salary"] = selected_currency["Salary"].map('${:,}'.format)
+
 st.subheader("Selected Player:")
-st.write(player_stats.reset_index(drop=True))
+st.write(selected_currency)
 
 # Find the closest players with the same position to the selected player
 pos = df["Pos"].loc[df["Player"]==input_data.player[0]].values[0]
@@ -205,7 +211,10 @@ try:
 
     # Display top 5 closest players to selected player
     st.subheader("Ranked 5 Closest Players:")
-    st.write(clustered_df)
+    # Format to show salary as currency
+    clustered_currency = clustered_df.copy()
+    clustered_currency["Salary"] = clustered_currency["Salary"].map('${:,}'.format)
+    st.write(clustered_currency)
 
     # Graph the player stats
     player_stats = df.loc[df["Player"]==input_data.player[0]]
