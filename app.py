@@ -122,6 +122,20 @@ def network(input_data, clustered_df):
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
                     )
+    
+    fig2.update_layout(
+    autosize=False,
+    width=600,
+    height=600,
+    margin=dict(
+        l=50,
+        r=50,
+        b=100,
+        t=100,
+        pad=4
+    ),
+    )
+    
     st.plotly_chart(fig2)
 
 # Create interactive dashboard
@@ -219,6 +233,7 @@ try:
     # Graph the player stats
     player_stats = df.loc[df["Player"]==input_data.player[0]]
 
+    ###### This code can only be used for local deployment###########
     # # Network graph
     # st.subheader("Network Graph of Closest Players to Target Player")
     # g=net.Network(height='500px', width='700px', heading='')
