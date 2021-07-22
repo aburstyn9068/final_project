@@ -7,6 +7,7 @@ from stvis import pv_static
 import plotly.graph_objects as go
 #import distance
 from sklearn.metrics.pairwise import euclidean_distances
+import networkx as nx
 
 # Player Distance function
 def cluster(df1, player):
@@ -23,7 +24,103 @@ def cluster(df1, player):
     df1 = df1.sort_values(by="Distance", ascending=True).reset_index(drop=True)
     
     # Return the top 5 closest players
-    return df1[1:6]
+    #return df1[1:6]
+    return df1.loc[df1["Player"]!=player].head()
+
+# Network graph function (https://plotly.com/python/network-graphs/)
+def network(input_data, clustered_df):
+
+    # Create the edge list
+    from_list = []
+    to_list = []
+    for index, row in clustered_df.iterrows():
+        from_list.append(input_data.player[0])
+        to_list.append(row["Player"])
+    graph_df = pd.DataFrame({"from": from_list, "to": to_list})
+
+    # Calculate coordinates for nodes based on distance from selected player
+    position_list = [
+        [0, ((clustered_df["Distance"][1]**2)-((.5-0)**2))**.5], 
+        [.25, ((clustered_df["Distance"][2]**2)-((.5-.25)**2))**.5], 
+        [.5, ((clustered_df["Distance"][3]**2)-((.5-.5)**2))**.5], 
+        [.75, ((clustered_df["Distance"][4]**2)-((.5-.75)**2))**.5], 
+        [1, ((clustered_df["Distance"][5]**2)-((.5-1)**2))**.5]
+    ]
+
+    G = nx.from_pandas_edgelist(graph_df, source="from", target="to")
+
+    edge_x = []
+    edge_y = []
+    for position in position_list:
+        x0, y0 = [.5,0]
+        x1, y1 = position
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y,
+        line=dict(width=0.5, color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    node_x = [.5]
+    node_y = [0]
+    for position in position_list:
+        x, y = position
+        node_x.append(x)
+        node_y.append(y)
+
+    node_trace = go.Scatter(
+        x=node_x, y=node_y,
+        mode='markers+text',
+        hoverinfo='text',
+        text=[input_data.player[0], clustered_df.Player[1], clustered_df.Player[2], 
+            clustered_df.Player[3], clustered_df.Player[4], clustered_df.Player[5]],
+        textposition="bottom center",
+        marker=dict(
+            showscale=True,
+            # colorscale options
+            #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
+            #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
+            #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
+            colorscale='Greens',
+            reversescale=False,
+            color=[],
+            size=50,
+            colorbar=dict(
+                thickness=15,
+                title='Player Salary',
+                xanchor='left',
+                titleside='right'
+            ),
+            line_width=2))
+
+    node_adjacencies = [int(player_stats["Salary"].values[0])]
+    node_text = [f"Salary: {int(player_stats.Salary.values[0])}"]
+
+    for index, row in clustered_df.iterrows():
+        node_adjacencies.append(row["Salary"])
+        #node_text.append(f"Salary: {row.Salary}")
+
+
+    node_trace.marker.color = node_adjacencies
+    #node_trace.text = node_text
+
+    fig2 = go.Figure(data=[edge_trace, node_trace],
+                layout=go.Layout(
+                    title='<br>Network Graph of Closest Players to Selected Player',
+                    titlefont_size=16,
+                    showlegend=False,
+                    hovermode='closest',
+                    margin=dict(b=20,l=5,r=5,t=40),
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+                    )
+    st.plotly_chart(fig2)
 
 # Create interactive dashboard
 # Title
@@ -127,6 +224,15 @@ try:
     # The thicker the line, the more closely related they are.
     # The size of the bubble representing the players is sized according to the players salary.""")
     
+    # Display the network graph
+    network(input_data, clustered_df)
+
+    st.write("""
+    The distance of the line connecting the players represents how closely related the players are.
+    The shorter the line, the more closely related they are.
+    The color of the bubble representing the players is scaled according to the players salary.
+    """)
+    
     # Line break
     st.markdown("***")
     
@@ -137,18 +243,20 @@ try:
     index = player1.columns
 
     # Display stats checkbox
-    st.write("Select stats to display:")
+    st.subheader("Select stats to display:")
     graph_index_selection = {}
     for stat in index:
         graph_index_selection[stat] = True
 
     # Create checkboxes
     cols = st.beta_columns(7)
+    default_stats = ["FG", "FGA", "2P", "2PA", "TRB"]
     col_index = 0
     counter = 0
     for stat in graph_index_selection:
         # Set default stats to display
-        if (stat == "FG") or (stat == "FGA") or (stat == "2P") or (stat == "2PA") or (stat == "TRB"):
+        #if (stat == "FG") or (stat == "FGA") or (stat == "2P") or (stat == "2PA") or (stat == "TRB"):
+        if stat in default_stats:
             graph_index_selection[stat] = cols[col_index].checkbox(stat, value=True)
         else:
             graph_index_selection[stat] = cols[col_index].checkbox(stat, value=False)
@@ -178,86 +286,4 @@ try:
     st.plotly_chart(fig)
 
 except ValueError:
-    st.write("No Players within selected salary range. Please select a higher salary bound")
-
-
-
-######################################
-import plotly.graph_objects as go
-
-import networkx as nx
-
-G = nx.random_geometric_graph(200, 0.125)
-
-edge_x = []
-edge_y = []
-for edge in G.edges():
-    x0, y0 = G.nodes[edge[0]]['pos']
-    x1, y1 = G.nodes[edge[1]]['pos']
-    edge_x.append(x0)
-    edge_x.append(x1)
-    edge_x.append(None)
-    edge_y.append(y0)
-    edge_y.append(y1)
-    edge_y.append(None)
-
-edge_trace = go.Scatter(
-    x=edge_x, y=edge_y,
-    line=dict(width=0.5, color='#888'),
-    hoverinfo='none',
-    mode='lines')
-
-node_x = []
-node_y = []
-for node in G.nodes():
-    x, y = G.nodes[node]['pos']
-    node_x.append(x)
-    node_y.append(y)
-
-node_trace = go.Scatter(
-    x=node_x, y=node_y,
-    mode='markers',
-    hoverinfo='text',
-    marker=dict(
-        showscale=True,
-        # colorscale options
-        #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
-        #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
-        #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
-        colorscale='YlGnBu',
-        reversescale=True,
-        color=[],
-        size=10,
-        colorbar=dict(
-            thickness=15,
-            title='Node Connections',
-            xanchor='left',
-            titleside='right'
-        ),
-        line_width=2))
-
-node_adjacencies = []
-node_text = []
-for node, adjacencies in enumerate(G.adjacency()):
-    node_adjacencies.append(len(adjacencies[1]))
-    node_text.append('# of connections: '+str(len(adjacencies[1])))
-
-node_trace.marker.color = node_adjacencies
-node_trace.text = node_text
-
-fig2 = go.Figure(data=[edge_trace, node_trace],
-             layout=go.Layout(
-                title='<br>Network graph made with Python',
-                titlefont_size=16,
-                showlegend=False,
-                hovermode='closest',
-                margin=dict(b=20,l=5,r=5,t=40),
-                annotations=[ dict(
-                    text="Python code: <a href='https://plotly.com/ipython-notebooks/network-graphs/'> https://plotly.com/ipython-notebooks/network-graphs/</a>",
-                    showarrow=False,
-                    xref="paper", yref="paper",
-                    x=0.005, y=-0.002 ) ],
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
-                )
-st.plotly_chart(fig2)
+    st.subheader("No players within selected salary range. Please select a higher salary bound")
